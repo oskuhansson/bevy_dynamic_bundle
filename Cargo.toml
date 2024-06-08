@@ -2,6 +2,12 @@
 name = "bevy_dynamic_bundle"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/oskuhansson/bevy_dynamic_bundle"
+license-file = "LICENSE"
+
+description = "Provides dynamic bundles for bevy"
+readme = "README.md"
 
 [dependencies]
 bevy = "0.13.2"

@@ -3,7 +3,9 @@ use bevy::ecs::system::{
 };
 use bevy::prelude::*;
 
-fn insert<T: Bundle>(bundle: T) -> impl DynEntityCommand {
+use dyn_clone::DynClone;
+
+fn insert<T: Bundle + Clone>(bundle: T) -> impl DynEntityCommand {
     move |entity: Entity, world: &mut World| {
         if let Some(mut entity) = world.get_entity_mut(entity) {
             entity.insert(bundle);
@@ -13,13 +15,13 @@ fn insert<T: Bundle>(bundle: T) -> impl DynEntityCommand {
     }
 }
 
-trait DynEntityCommand<Marker = ()>: Send + 'static {
+trait DynEntityCommand<Marker = ()>: DynClone + Send + 'static {
     fn apply(self: Box<Self>, id: Entity, world: &mut World);
 }
 
 impl<F> DynEntityCommand for F
 where
-    F: FnOnce(Entity, &mut World) + Send + 'static,
+    F: FnOnce(Entity, &mut World) + DynClone + Send + 'static,
 {
     fn apply(self: Box<Self>, id: Entity, world: &mut World) {
         self(id, world);
@@ -32,20 +34,22 @@ impl EntityCommand for Box<dyn DynEntityCommand> {
     }
 }
 
+dyn_clone::clone_trait_object!(DynEntityCommand);
+#[derive(Clone)]
 pub struct DynamicBundel {
     #[allow(dead_code)]
     bundle_fn: Box<dyn DynEntityCommand>
 }
 
 impl DynamicBundel {
-    pub fn new<T: Bundle>(bundle: T) -> DynamicBundel {
+    pub fn new<T: Bundle + Clone>(bundle: T) -> DynamicBundel {
         DynamicBundel {
             bundle_fn: Box::new(insert(bundle))
         }
     }
 }
 
-impl<T: Bundle> From<T> for DynamicBundel {
+impl<T: Bundle + Clone> From<T> for DynamicBundel {
     fn from(bundle: T) -> Self {
         DynamicBundel::new(bundle)
     }
@@ -69,7 +73,7 @@ mod tests {
 
     #[test]
     fn simple_dyn_bundle_test() {
-        #[derive(Component)]
+        #[derive(Component, Clone)]
         struct ComponentA;
 
         App::new().add_systems(Startup, (setup, query).chain());
@@ -77,7 +81,8 @@ mod tests {
         fn setup(mut commands: Commands) {
             let dyn_bundle = DynamicBundel::new(ComponentA);
 
-            commands.spawn(()).dyn_insert(dyn_bundle);
+            commands.spawn(()).dyn_insert(dyn_bundle.clone());
+            commands.spawn(()).dyn_insert(dyn_bundle.clone());
             
         }
 

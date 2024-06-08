@@ -1,0 +1,8 @@
+[package]
+name = "bevy_dynamic_bundle"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = "0.13.2"
+dyn-clone = "1.0.17"

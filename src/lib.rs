@@ -5,6 +5,14 @@ use bevy::prelude::*;
 
 use dyn_clone::DynClone;
 
+pub mod prelude{
+    pub use super::{
+        DynamicBundel, 
+        DynamicSpawn,
+        DynamicInsert,
+    };
+}
+
 fn insert<T: Bundle + Clone>(bundle: T) -> impl DynEntityCommand {
     move |entity: Entity, world: &mut World| {
         if let Some(mut entity) = world.get_entity_mut(entity) {
@@ -15,13 +23,13 @@ fn insert<T: Bundle + Clone>(bundle: T) -> impl DynEntityCommand {
     }
 }
 
-trait DynEntityCommand<Marker = ()>: DynClone + Send + 'static {
+trait DynEntityCommand<Marker = ()>: DynClone + Send + Sync + 'static {
     fn apply(self: Box<Self>, id: Entity, world: &mut World);
 }
 
 impl<F> DynEntityCommand for F
 where
-    F: FnOnce(Entity, &mut World) + DynClone + Send + 'static,
+    F: FnOnce(Entity, &mut World) + DynClone + Send + Sync + 'static,
 {
     fn apply(self: Box<Self>, id: Entity, world: &mut World) {
         self(id, world);
@@ -67,6 +75,21 @@ impl<'a> DynamicInsert<'a> for EntityCommands<'a> {
     }
 }
 
+#[allow(dead_code)]
+pub trait DynamicSpawn{
+    fn dyn_spawn(&mut self, dyn_bundel: DynamicBundel) -> EntityCommands;
+}
+
+// Implementation for Commands
+impl<'a, 'b> DynamicSpawn for Commands<'a, 'b> {
+    fn dyn_spawn(&mut self, dyn_bundel: DynamicBundel) -> EntityCommands {
+        let mut entity_commands = self.spawn(());
+        entity_commands.dyn_insert(dyn_bundel);
+        entity_commands
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -74,21 +97,53 @@ mod tests {
     #[test]
     fn simple_dyn_bundle_test() {
         #[derive(Component, Clone)]
-        struct ComponentA;
+        struct ComponentA(i32);
 
-        App::new().add_systems(Startup, (setup, query).chain());
+        App::new().add_systems(Startup, (setup, query).chain()).run();
 
         fn setup(mut commands: Commands) {
-            let dyn_bundle = DynamicBundel::new(ComponentA);
+            let dyn_bundle = DynamicBundel::new(ComponentA(2));
 
-            commands.spawn(()).dyn_insert(dyn_bundle.clone());
-            commands.spawn(()).dyn_insert(dyn_bundle.clone());
+            //commands.spawn(()).dyn_insert(dyn_bundle.clone());
+            commands.dyn_spawn(dyn_bundle);
+
             
         }
 
         fn query(components: Query<&ComponentA>) {
-            components.get_single().unwrap();
+            assert_eq!(2 ,components.get_single().unwrap().0);
         }
 
     }
+
+    #[test]
+    fn spawner_test() {
+        #[derive(Component, Clone)]
+        struct Spawner(DynamicBundel);
+
+        #[derive(Component, Clone)]
+        struct ComponentA(i32);
+
+        App::new().add_systems(Startup, (setup, spawn, query).chain()).run();
+
+        fn setup(mut commands: Commands) {
+            let dyn_bundle = DynamicBundel::new(ComponentA(2));
+
+            //commands.spawn(()).dyn_insert(dyn_bundle.clone());
+            commands.spawn(Spawner(dyn_bundle));
+
+            
+        }
+
+        fn spawn(mut commands: Commands, spawner_q: Query<&Spawner>) {
+            let spawner = spawner_q.get_single().unwrap();
+            commands.dyn_spawn(spawner.0.clone());
+        }
+
+        fn query(components: Query<&ComponentA>) {
+            assert_eq!(2 ,components.get_single().unwrap().0);
+        }
+
+    }
+
 }

@@ -2,7 +2,6 @@ use bevy::ecs::system::{
     EntityCommands, EntityCommand
 };
 use bevy::prelude::*;
-//use std::marker::PhantomData;
 
 fn insert<T: Bundle>(bundle: T) -> impl DynEntityCommand {
     move |entity: Entity, world: &mut World| {
@@ -14,47 +13,9 @@ fn insert<T: Bundle>(bundle: T) -> impl DynEntityCommand {
     }
 }
 
-/* 
-pub struct DynamicWithEntity {
-    bundle_fn: Box<dyn>
-}
-*/
-
-pub trait DynEntityCommand<Marker = ()>: Send + 'static {
-    /// Executes this command for the given [`Entity`].
+trait DynEntityCommand<Marker = ()>: Send + 'static {
     fn apply(self: Box<Self>, id: Entity, world: &mut World);
-    
-    /* 
-    /// Returns a [`Command`] which executes this [`DynEntityCommand`] for the given [`Entity`].
-    fn with_entity(self: Box<Self>, id: Entity) -> DynWithEntity<Marker> 
-    where
-        Self: DynEntityCommand
-    {
-        DynWithEntity {
-            cmd: self,
-            id,
-            marker: PhantomData,
-        }
-    }
-    */
 }
-/* 
-pub struct DynWithEntity<Marker> {
-    cmd: Box<dyn DynEntityCommand>,
-    id: Entity,
-    marker: PhantomData<fn() -> Marker>,
-}
-
-impl<M> Command for DynWithEntity<M>
-where
-    M: 'static,
-{
-    #[inline]
-    fn apply(self, world: &mut World) {
-        self.cmd.apply(self.id, world);
-    }
-}
-*/
 
 impl<F> DynEntityCommand for F
 where
@@ -71,13 +32,13 @@ impl EntityCommand for Box<dyn DynEntityCommand> {
     }
 }
 
-
 pub struct DynamicBundel {
+    #[allow(dead_code)]
     bundle_fn: Box<dyn DynEntityCommand>
 }
 
 impl DynamicBundel {
-    fn new<T: Bundle>(bundle: T) -> DynamicBundel {
+    pub fn new<T: Bundle>(bundle: T) -> DynamicBundel {
         DynamicBundel {
             bundle_fn: Box::new(insert(bundle))
         }
@@ -90,25 +51,20 @@ impl<T: Bundle> From<T> for DynamicBundel {
     }
 }
 
-trait DynamicInsert<'a> {
-    fn insert_dynamic_bundle(&mut self, dyn_bundel: DynamicBundel) -> &mut EntityCommands<'a>;
+#[allow(dead_code)]
+pub trait DynamicInsert<'a> {
+    fn dyn_insert(&mut self, dyn_bundel: DynamicBundel) -> &mut EntityCommands<'a>;
 }
 
 impl<'a> DynamicInsert<'a> for EntityCommands<'a> {
-    fn insert_dynamic_bundle(&mut self, dyn_bundel: DynamicBundel) -> &mut EntityCommands<'a> {
+    fn dyn_insert(&mut self, dyn_bundel: DynamicBundel) -> &mut EntityCommands<'a> {
         self.add(dyn_bundel.bundle_fn);
         self
     }
 }
 
-
-
-
-
 #[cfg(test)]
 mod tests {
-    //use bevy::{ecs::world, transform::commands};
-
     use super::*;
 
     #[test]
@@ -121,7 +77,7 @@ mod tests {
         fn setup(mut commands: Commands) {
             let dyn_bundle = DynamicBundel::new(ComponentA);
 
-            commands.spawn(()).insert_dynamic_bundle(dyn_bundle);
+            commands.spawn(()).dyn_insert(dyn_bundle);
             
         }
 

@@ -5,6 +5,9 @@ edition = "2021"
 repository = "https://github.com/oskuhansson/bevy_dynamic_bundle"
 license-file = "LICENSE"
 
+keywords = ["gamedev", "bevy", "dyn"]
+categories = ["game-development"]
+
 description = "Provides dynamic bundles for bevy"
 readme = "README.md"
 

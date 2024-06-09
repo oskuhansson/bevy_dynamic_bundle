@@ -4,7 +4,7 @@
 use DynamicBundel::new() to create a dynamic bundle that can be used by dyn_spawn or dyn_insert.
 
 Heres some example code:
-'''rust
+```rust
 use bevy_dynamic_bundle::prelude::*;
 use bevy::prelude::*;
 
@@ -26,4 +26,4 @@ fn setup(mut commands: Commands) {
 fn query(components: Query<&ComponentA>) {
     assert_eq!(2 ,components.get_single().unwrap().0);
 }
-'''
+```

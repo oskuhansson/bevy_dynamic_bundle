@@ -3,7 +3,7 @@
 
 use DynamicBundel::new() to create a dynamic bundle that can be used by dyn_spawn or dyn_insert.
 
-Heres some example code:
+Here is some example code:
 ```rust
 use bevy_dynamic_bundle::prelude::*;
 use bevy::prelude::*;

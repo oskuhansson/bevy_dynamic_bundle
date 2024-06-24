@@ -1,5 +1,5 @@
-use::bevy_dynamic_bundle::prelude::*;
-use::bevy::prelude::*;
+use bevy_dynamic_bundle::prelude::*;
+use bevy::prelude::*;
 
 #[derive(Component, Clone)]
 struct Spawner(DynamicBundel);

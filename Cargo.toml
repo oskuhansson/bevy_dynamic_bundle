@@ -3,7 +3,7 @@ name = "bevy_dynamic_bundle"
 version = "0.2.1"
 edition = "2021"
 repository = "https://github.com/oskuhansson/bevy_dynamic_bundle"
-license-file = "LICENSE"
+license = "Apache-2.0"
 documentation = "https://docs.rs/bevy_dynamic_bundle"
 
 keywords = ["gamedev", "bevy", "dyn"]
